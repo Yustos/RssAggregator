@@ -29,3 +29,11 @@ CREATE TABLE IF NOT EXISTS `records` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_feed_hash` (`feed_id`,`hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DELIMITER //
+CREATE DEFINER=`root`@`localhost` PROCEDURE `set_record_state`(IN `id` INT, IN `state` TINYINT)
+    MODIFIES SQL DATA
+BEGIN
+	update records set records.state=state where records.id=id;
+END//
+DELIMITER ;

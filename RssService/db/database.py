@@ -2,8 +2,10 @@
 import sys
 import mysql.connector
 import json
+import os
 
-with open("settings.conf") as f:
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+with open(os.path.join(__location__, "..", "settings.conf")) as f:
     CONFIG = json.load(f)
 
 class db_context(object):
