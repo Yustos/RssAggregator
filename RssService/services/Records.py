@@ -6,11 +6,11 @@ class Records(object):
         self.conn = mysql_connection
 
     def getRecordById(self, id):
-        with execute_query(self.conn, "select id, feed_id, guid, date, link, title, description, state from records where id=%(id)s", id=id) as qry:
+        with execute_query(self.conn, "select id, feed_id, link, guid, date, link, title, description, state from records where id=%(id)s", id=id) as qry:
             return Record(dict(zip(qry.cursor().column_names, qry.cursor().fetchone())))
 
     def getLastRecords(self, count):
-        with execute_query(self.conn, "select id, feed_id, guid, date, link, title, description, state from records where state<>%(state)s order by date desc limit %(count)s", state = StateType.Readed, count=count) as qry:
+        with execute_query(self.conn, "select id, feed_id, date, link, title, description, state from records where state<>%(state)s order by date desc limit %(count)s", state = StateType.Readed, count=count) as qry:
             return [Record(dict(zip(qry.cursor().column_names, r))) for r in qry.cursor().fetchall()]
 
     def setRecordState(self, id, state):
