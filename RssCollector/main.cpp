@@ -6,6 +6,9 @@
 #include "collector.hpp"
 #include "configuration.hpp"
 
+//TODO: where
+//define USE_LIB_RSS
+
 int main(int argc, char** argv) {
 	std::cout << "Started" << std::endl;
 	

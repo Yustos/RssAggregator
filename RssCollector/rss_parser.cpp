@@ -5,12 +5,30 @@
 */
 
 #include "rss_parser.hpp"
+
+#ifdef USE_LIB_RSS
+#include <RSS.h>
+#else
 #include <boost/spirit/include/phoenix.hpp>
+#endif
+
 #include <fstream>
 #include <locale>
 #include <vector>
 
 namespace rss_parser {
+#ifdef USE_LIB_RSS
+	void RssErrorHandler(RSS_u32 error_level, const RSS_char* error, size_t pos) {
+		if(error_level == RSS_EL_ERROR) {
+			if(pos != RSS_NO_POS_INFO)
+				RSS_printf(RSS_text("[%d] %s\n"), pos, error);
+			else
+				RSS_printf(RSS_text("%s\n"), error);
+		}
+		throw error;
+	}
+#else
+	
 	rss_grammar::rss_grammar() : rss_grammar::base_type(start) {
 
 	using boost::phoenix::bind;
@@ -58,8 +76,24 @@ namespace rss_parser {
 
 		html_entity = (lit('&') >> lit('#') >> boost::spirit::int_[boost::spirit::qi::_a = boost::spirit::qi::_1] >> lit(';')[boost::spirit::qi::_val = boost::spirit::qi::_a]);
 }
+	
+#endif
 
 	std::vector<models::record> parse_xml(const std::string &xml_p) {
+#ifdef USE_LIB_RSS
+		std::vector<models::record> ret;
+		RSS_Feed* feed = RSS_create_feed_from_str(xml_p.c_str(), RssErrorHandler);
+
+		RSS_Item* cur = feed->items;
+		while (cur)
+		{
+			models::record r(cur->guid, cur->link, cur->pubDate, cur->title, cur->description);
+			ret.push_back(r);
+			cur = cur->next;
+		}
+		RSS_free_feed(feed);
+		return ret;
+#else		
 		rss_grammar g;
 		std::vector<models::record> ret;
 		std::string::const_iterator st = xml_p.begin(), en = xml_p.end();
@@ -73,5 +107,6 @@ namespace rss_parser {
 		} while (st!=en);
 
 		return ret;
+#endif
 	}
 }

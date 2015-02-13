@@ -2,9 +2,14 @@
 #include "md5.hpp"
 #include "str_utils.hpp"
 #include <ctime>
-#include <boost/date_time.hpp>
-#include <boost/date_time/local_time/local_time.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+
+#ifdef USE_LIB_RSS
+	
+#else
+	#include <boost/date_time.hpp>
+	#include <boost/date_time/local_time/local_time.hpp>
+	#include <boost/date_time/posix_time/posix_time.hpp>
+#endif
 
 namespace models
 {
@@ -25,6 +30,21 @@ namespace models
 
 			this->hash = md5(id);
 			this->date = parse_date(date);
+	}
+	
+	record::record(const char* id,
+			const char* link,
+			const long date,
+			const char* title,
+			const char* description)
+	{
+			this->id = std::string(id);
+			this->link = std::string(link);
+			this->title = std::string(title);
+			this->description = std::string(description);
+
+			this->hash = md5(this->id);
+			this->date = date;
 	}
 
 	std::string record::get_id() const
@@ -58,20 +78,25 @@ namespace models
 	}
 
 	long record::parse_date(const std::string &input) {
-			using namespace boost::gregorian;
-			using namespace boost::local_time;
-			using namespace boost::posix_time;
+		//TODO: date
+#ifdef USE_LIB_RSS
+		return 0;
+#else
+		using namespace boost::gregorian;
+		using namespace boost::local_time;
+		using namespace boost::posix_time;
 
-			boost::local_time::local_time_input_facet* lif(new boost::local_time::local_time_input_facet("%a, %d %b %Y %H:%M:%S GMT"));
-			std::stringstream ss(input);
-			ss.imbue(std::locale(std::locale::classic(), lif));
+		boost::local_time::local_time_input_facet* lif(new boost::local_time::local_time_input_facet("%a, %d %b %Y %H:%M:%S GMT"));
+		std::stringstream ss(input);
+		ss.imbue(std::locale(std::locale::classic(), lif));
 
-			boost::local_time::local_date_time dt(boost::local_time::local_sec_clock::local_time(boost::local_time::time_zone_ptr()));
-			ss >> dt;
+		boost::local_time::local_date_time dt(boost::local_time::local_sec_clock::local_time(boost::local_time::time_zone_ptr()));
+		ss >> dt;
 
-			boost::posix_time::ptime time_t_epoch(boost::gregorian::date(1970, 1, 1));
-			time_duration diff = dt.utc_time() - time_t_epoch;
-			return diff.total_seconds();
+		boost::posix_time::ptime time_t_epoch(boost::gregorian::date(1970, 1, 1));
+		time_duration diff = dt.utc_time() - time_t_epoch;
+		return diff.total_seconds();
+#endif
 	}
 
 

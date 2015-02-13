@@ -36,8 +36,10 @@ LOOP
 	END;
 END LOOP;
 END;
+$$;
 
 CREATE FUNCTION set_record_state(id integer, state smallint) RETURNS void
     LANGUAGE sql
-    AS $$update record set state=set_record_state.state where id=set_record_state.id;
+    AS $$
+	update record set state=set_record_state.state where id=set_record_state.id;
 $$;

@@ -3,6 +3,7 @@
 #include "storage.hpp"
 #include "feed.hpp"
 #include "collector.hpp"
+#include <iostream>
 
 namespace collector
 {

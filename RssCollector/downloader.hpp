@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <functional>
 
 namespace downloader {
 	std::string download(const std::string &url);
