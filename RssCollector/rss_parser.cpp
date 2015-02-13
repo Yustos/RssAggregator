@@ -4,7 +4,7 @@
  * project https://github.com/yukipyon/rss
 */
 
-#include "rss_parser.h"
+#include "rss_parser.hpp"
 #include <boost/spirit/include/phoenix.hpp>
 #include <fstream>
 #include <locale>

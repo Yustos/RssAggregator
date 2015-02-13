@@ -12,7 +12,7 @@ class RecordServiceHandler(RequestHandler):
     def get(self, path):
         id = self.get_argument("id", default=None, strip=False)
         with db_context() as ctx:
-            record = Records(ctx.conn()).getRecordById(int(id))
+            record = Records(ctx.conn()).getRecordById(int(id))[0]
             self.write(record.dict())
 
     @LogApi()

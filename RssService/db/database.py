@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 import sys
-import mysql.connector
+import psycopg2
 import json
 import os
 
@@ -11,10 +10,7 @@ with open(os.path.join(__location__, "..", "settings.conf")) as f:
 class db_context(object):
 
     def __init__(self):
-        self.user = CONFIG.get('user');
-        self.password = CONFIG.get('password');
-        self.host = CONFIG.get('host');
-        self.db = CONFIG.get('database');
+        self.connectionString = CONFIG.get('connectionString');
         self._conn = None;
 
     def conn(self):
@@ -24,7 +20,7 @@ class db_context(object):
         self._conn.commit()
 
     def __enter__(self):
-        self._conn = mysql.connector.connect(user=self.user, password=self.password, host=self.host, database=self.db)
+        self._conn = psycopg2.connect(self.connectionString)
         return self
 
     def __exit__(self, type, value, traceback):

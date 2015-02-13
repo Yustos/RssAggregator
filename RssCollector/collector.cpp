@@ -1,14 +1,17 @@
-#include "rss_parser.h"
-#include "record.h"
-#include "storage.h"
-#include "feed.h"
-#include "collector.h"
+#include "rss_parser.hpp"
+#include "record.hpp"
+#include "storage.hpp"
+#include "feed.hpp"
+#include "collector.hpp"
 
 namespace collector
 {
+	Collector::Collector(const configuration::config &cfg) : _db(cfg){
+        }
+	
 	void Collector::collectFeeds()
 	{
-		std::vector<models::feed> feeds = db.ReadFeeds();
+		std::vector<models::feed> feeds = _db.ReadFeeds();
 		std::cout << "Feeds to collect: " << feeds.size() << std::endl;
 
 		std::vector<models::feed>::const_iterator st = feeds.begin(), en = feeds.end();
@@ -42,7 +45,7 @@ namespace collector
 	{
 		std::vector<models::record>::const_iterator st = items.begin(), en = items.end();
 		for (; st!=en; st++) {
-			db.Write(feed, *st);
+			_db.Write(feed, *st);
 		}
 	}
 }

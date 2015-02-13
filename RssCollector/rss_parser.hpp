@@ -8,7 +8,7 @@
 #define RSS_PARSER_HPP
 
 #include <boost/spirit/include/qi.hpp>
-#include "record.h"
+#include "record.hpp"
 #include <vector>
 #include <string>
 

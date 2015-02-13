@@ -1,5 +1,5 @@
-#include "feed.h"
-#include "downloader.h"
+#include "feed.hpp"
+#include "downloader.hpp"
 
 namespace models {
 

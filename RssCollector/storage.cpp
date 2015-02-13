@@ -1,107 +1,105 @@
-#include "storage.h"
-#include "feed.h"
-#include "str_utils.h"
+#include "storage.hpp"
+#include "feed.hpp"
+#include "str_utils.hpp"
+#include "configuration.hpp"
+
 #include <iostream>
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "mysql.h"
 #include <vector>
 #include <map>
+#include <libpq-fe.h>
+
+#define HAVE_STRUCT_TIMESPEC
 
 namespace storage {
-	void finish_with_error(MYSQL *con)
-	{
-		std::cerr << mysql_error(con);
-		mysql_close(con);
-		//TODO: throw
-	}
+    void Database::finish_with_error() const 
+    {
+        char* error = PQerrorMessage(_connection);
+        std::cerr << error;
+        PQfinish(_connection);
+        throw error;
+    }
 
-	std::string Escape(MYSQL *mysql, const std::string &wStr)
-	{
-		const char* wstr = wStr.c_str();
-		const int wlen = wStr.length();
-		std::vector<char> escaped(wlen * 2 + 1);
-		unsigned long escapedLen = mysql_real_escape_string(mysql, &escaped[0], wstr, wlen);
-		if (escapedLen > 0)
-				return std::string(&escaped[0], escapedLen);
+    std::string Database::Escape(const std::string &wStr) const 
+    {
+        char* escaped = PQescapeLiteral(_connection, wStr.c_str(), wStr.length());
+        return std::string(escaped);
+    }
 
-		return std::string();
-	}
+    Database::Database(const configuration::config &cfg)
+    {
+        _connection = PQconnectdb(cfg.getConnectionString().c_str());
+        if (PQstatus(_connection) != CONNECTION_OK)
+        {
+            finish_with_error();
+        }
+    }
 
-	Database::Database()
-	{
-		connection = mysql_init(NULL);
-		if (mysql_real_connect(connection, "localhost", "rss", MYSQL_USER,
-				MYSQL_PASSWORD, 0, NULL, 0) == NULL)
-		{
-				finish_with_error(connection);
-		}
-	}
+    Database::~Database()
+    {
+        PQfinish(_connection);
+    }
 
-	Database::~Database()
-	{
-		mysql_close(connection);
-	}
+    std::vector<models::feed> Database::ReadFeeds() const
+    {
+        PGresult *res = PQexec(_connection, "SELECT id, url FROM feed");
+        if ((!res) || (PQresultStatus(res) != PGRES_TUPLES_OK))
+        {
+            PQclear(res);
+            finish_with_error();
+        }
 
-	std::vector<models::feed> Database::ReadFeeds()
-	{
-		if (mysql_query(connection, "SELECT id, url FROM feeds"))
-		{
-				finish_with_error(connection);
-		}
+        std::map<std::string, int> columns;
+        int columnCount = PQnfields(res);
+        for (int i = 0; i < columnCount; i++)
+        {
+            char* columnName = PQfname(res, i);
+            columns.insert(std::pair<std::string, int>(std::string(columnName), i));
+        }
 
-		MYSQL_RES *cursor = mysql_store_result(connection);
-		if (cursor == NULL)
-		{
-				finish_with_error(connection);
-		}
+            
+        int recordCount = PQntuples(res);
+        std::vector<models::feed> result;
+        for(int i = 0 ; i < recordCount ; i++)
+        {
+            int id = utils::to_int(PQgetvalue(res, i, columns["id"]));
+            char* url = PQgetvalue(res, i, columns["url"]);
+            models::feed f(id, url);
+            result.push_back(f);
+        }
 
-		std::map<std::string, int> columns;
-		int i = 0;
-		MYSQL_FIELD* field;
-		while (field = mysql_fetch_field(cursor)){
-				columns.insert(std::pair<std::string, int>(field->name, i++));
-		}
+        PQclear(res);
+        return result;
+    }
 
-		MYSQL_ROW row;
-		std::vector<models::feed> result;
-		while ((row = mysql_fetch_row(cursor)))
-		{
-			int id = utils::to_int(std::string(row[columns["id"]]));
-			std::string url(row[columns["url"]]);
-			models::feed f(id, url);
-			result.push_back(f);
-		}
+    void Database::Write(const models::feed& feed, const models::record& item) const {
+            std::string query = "SELECT add_record(";
 
-		mysql_free_result(cursor);
-		return result;
-	}
+            query.append(utils::to_string(feed.id));
 
-	void Database::Write(const models::feed& feed, const models::record& item){
-		std::string query = "CALL add_record (";
+            query.append(",");
+            query.append(Escape(item.get_hash()));
+            query.append(",");
 
-		query.append(utils::to_string(feed.id));
+            query.append(Escape(item.get_id()));
+            query.append(",");
+            query.append(utils::to_string(item.get_date()));
+            query.append(",");
+            query.append(Escape(item.get_link()));
+            query.append(",");
+            query.append(Escape(item.get_title()));
+            query.append(",");
+            query.append(Escape(item.get_description()));
+            query.append(")");
 
-		query.append(",'");
-		query.append(Escape(connection, item.get_hash()));
-		query.append("','");
-
-		query.append(Escape(connection, item.get_id()));
-		query.append("','");
-		query.append(utils::to_string(item.get_date()));
-		query.append("','");
-		query.append(Escape(connection, item.get_link()));
-		query.append("','");
-		query.append(Escape(connection, item.get_title()));
-		query.append("','");
-		query.append(Escape(connection, item.get_description()));
-		query.append("')");
-
-		if (mysql_query(connection, query.c_str())) {
-				finish_with_error(connection);
-		}
-
-		mysql_commit(connection);
-	}
+            PGresult *res = PQexec(_connection, query.c_str());
+            if ((!res) || (PQresultStatus(res) != PGRES_TUPLES_OK))
+            {
+                PQclear(res);
+                finish_with_error();
+            }
+            PQclear(res);
+    }
 }

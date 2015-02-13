@@ -1,5 +1,5 @@
-#include "downloader.h"
-#include "str_utils.h"
+#include "downloader.hpp"
+#include "str_utils.hpp"
 #include <sys/stat.h>
 #include <utility>
 #include <string>

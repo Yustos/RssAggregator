@@ -6,13 +6,17 @@ class Records(object):
         self.conn = mysql_connection
 
     def getRecordById(self, id):
-        with execute_query(self.conn, "select id, feed_id, link, guid, date, link, title, description, state from records where id=%(id)s", id=id) as qry:
-            return Record(dict(zip(qry.cursor().column_names, qry.cursor().fetchone())))
+        with execute_query(self.conn, "select id, feed_id, link, guid, date, link, title, description, state from record where id=%(id)s", id=id) as qry:
+            return self.mapResult(qry.cursor())
 
     def getLastRecords(self, count):
-        with execute_query(self.conn, "select id, feed_id, date, link, title, description, state from records where state<>%(state)s order by date desc limit %(count)s", state = StateType.Readed, count=count) as qry:
-            return [Record(dict(zip(qry.cursor().column_names, r))) for r in qry.cursor().fetchall()]
+        with execute_query(self.conn, "select id, feed_id, date, link, title, description, state from record where state<>%(state)s order by date desc limit %(count)s", state = StateType.Readed, count=count) as qry:
+            return self.mapResult(qry.cursor())
 
     def setRecordState(self, id, state):
-        with execute_nonquery(self.conn, "call set_record_state(%(id)s, %(state)s)", id = id, state = state) as qry:
+        with execute_nonquery(self.conn, "select set_record_state(%(id)s, %(state)s::smallint)", id = id, state = state) as qry:
             pass
+
+    def mapResult(self, cursor):
+        columns = [c.name for c in cursor.description]
+        return [Record(dict(zip(columns, row))) for row in cursor.fetchall()]

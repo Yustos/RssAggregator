@@ -9,4 +9,4 @@
 namespace downloader {
 	std::string download(const std::string &url);
 }
-#endif 
+#endif

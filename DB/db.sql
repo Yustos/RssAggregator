@@ -1,39 +1,43 @@
-DELIMITER //
-CREATE PROCEDURE `add_record`(IN `feed_id` INT, IN `hash` CHAR(32), IN `guid` VARCHAR(1024), IN `date` BIGINT, IN `link` VARCHAR(1024), IN `title` VARCHAR(2048), IN `description` TEXT)
-    MODIFIES SQL DATA
-    DETERMINISTIC
+CREATE TABLE feed (
+    id serial,
+    url text NOT NULL
+);
+
+CREATE TABLE record (
+    id serial,
+    feed_id integer NOT NULL,
+    hash character(32) NOT NULL,
+    guid text,
+    date bigint NOT NULL,
+    link character varying(1024) DEFAULT NULL::character varying,
+    title character varying(2048) DEFAULT NULL::character varying,
+    description text,
+    state smallint NOT NULL
+);
+
+CREATE FUNCTION add_record(feed_id integer, hash character, guid text, date bigint, link character varying, title character varying, description text) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
 BEGIN
-	INSERT INTO records (feed_id, hash, guid,date,link,title,description, state)
-	VALUES(feed_id, hash, guid,date,link,title,description, 0) ON DUPLICATE KEY UPDATE    
-	guid=guid,date = date,link = link,title=title,description=description, state=1;
-END//
-DELIMITER ;
+LOOP
+	UPDATE record
+	SET guid = add_record.guid, date = add_record.date, link = add_record.link, title = add_record.title, description = add_record.description, state = 1
+	WHERE record.feed_id=add_record.feed_id and record.hash=add_record.hash;
+	
+	IF found THEN
+	    RETURN;
+	END IF;
+	
+	BEGIN
+		INSERT INTO record (feed_id, hash, guid,date,link,title,description, state)
+		VALUES(feed_id, hash, guid,date,link,title,description, 0);
+		RETURN;
+	EXCEPTION WHEN unique_violation THEN
+	END;
+END LOOP;
+END;
 
-
-CREATE TABLE IF NOT EXISTS `feeds` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `url` varchar(1024) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-CREATE TABLE IF NOT EXISTS `records` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `feed_id` int(11) NOT NULL,
-  `hash` char(32) NOT NULL,
-  `guid` varchar(1024) DEFAULT NULL,
-  `date` bigint(20) NOT NULL,
-  `link` varchar(1024) DEFAULT NULL,
-  `title` varchar(2048) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `state` tinyint(4) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_feed_hash` (`feed_id`,`hash`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-DELIMITER //
-CREATE DEFINER=`root`@`localhost` PROCEDURE `set_record_state`(IN `id` INT, IN `state` TINYINT)
-    MODIFIES SQL DATA
-BEGIN
-	update records set records.state=state where records.id=id;
-END//
-DELIMITER ;
+CREATE FUNCTION set_record_state(id integer, state smallint) RETURNS void
+    LANGUAGE sql
+    AS $$update record set state=set_record_state.state where id=set_record_state.id;
+$$;
