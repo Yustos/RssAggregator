@@ -10,6 +10,8 @@
 //define USE_LIB_RSS
 
 int main(int argc, char** argv) {
+    try
+    {
 	std::cout << "Started" << std::endl;
 	
 	configuration::config cfg;
@@ -17,4 +19,10 @@ int main(int argc, char** argv) {
 	collector.collectFeeds();
 	std::cout << "Finished" << std::endl;
 	return 0;
+    }
+    catch (char* e)
+    {
+	std::cerr << "Failed to run: " << e << std::endl;
+	
+    }
 }

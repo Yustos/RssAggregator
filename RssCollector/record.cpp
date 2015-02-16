@@ -41,7 +41,14 @@ namespace models
 			this->id = std::string(id);
 			this->link = std::string(link);
 			this->title = std::string(title);
-			this->description = std::string(description);
+			if (description == NULL)
+			{
+			    this->description = std::string("");
+			}
+			else
+			{
+			    this->description = std::string(description);
+			}
 
 			this->hash = md5(this->id);
 			this->date = date;

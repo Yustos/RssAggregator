@@ -6,11 +6,11 @@
 namespace configuration {
     class config {
     public:
-        config();
-        std::string getConnectionString() const;
+	config();
+	std::string getConnectionString() const;
     private:
-        std::string _connectionString;
-        const char* _configFileName = "settings.conf";
+	std::string _connectionString;
+	static const char* _configFilename;
     };
 }
 

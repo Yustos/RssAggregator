@@ -29,7 +29,9 @@ namespace collector
 		{
 			std::vector<models::record> records;
 			std::string xml = feed.downloadFeed();
+			std::cout << "Feed downloaded" << std::endl;
 			records = rss_parser::parse_xml(xml);
+			std::cout << "Feed parsed" << std::endl;
 			collectRecords(feed, records);
 			std::cout << "Writed records: " << records.size() << std::endl;
 		}
@@ -37,9 +39,9 @@ namespace collector
 			std::cerr << "Failed to collect feed" << std::endl;
 			std::cerr << e << std::endl;
 		}
-		catch (...) {
-			std::cerr << "Unknown exception";
-		}
+		//catch (...) {
+		//	std::cerr << "Unknown exception";
+		//}
 	}
 
 	void Collector::collectRecords(const models::feed &feed, const std::vector<models::record> &items)
