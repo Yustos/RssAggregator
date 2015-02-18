@@ -53,6 +53,29 @@ class execute_query(object):
             e = sys.exc_info()[0]
             print e
 
+class call_proc(object):
+    
+    def __init__(self, conn, statement, *prepared_args):
+        self.conn = conn
+        self.stmt = statement
+        self.prepared_args = prepared_args
+        self._cursor = None
+
+    def cursor(self):
+        return self._cursor
+
+    def __enter__(self):
+        self._cursor = self.conn.cursor()
+        self._cursor.callproc(self.stmt, self.prepared_args)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        try:
+            self._cursor.close()
+        except:
+            e = sys.exc_info()[0]
+            print e
+
 class execute_nonquery(object):
     
     def __init__(self, conn, statement, *prepared_args, **kwargs):

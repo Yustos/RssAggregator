@@ -5,6 +5,7 @@ import logging
 import os
 from api.ListServiceHandler import ListServiceHandler
 from api.RecordServiceHandler import RecordServiceHandler
+from api.FeedServiceHandler import FeedServiceHandler
 from Logger import Logger
 logInstance = None
 
@@ -18,10 +19,12 @@ class LoggerHandler(logging.Handler):
             logInstance.add(handler.request.remote_ip, handler.request.uri)
 
 settings = {
-    "log_function": LoggerHandler.LogRequest
+    "log_function": LoggerHandler.LogRequest,
+    "compress_response": True
 }
 
 application = Application([
+    url(r"/api/feed(.*)", FeedServiceHandler, name="feedService"),
     url(r"/api/list(.*)", ListServiceHandler, name="listService"),
     url(r"/api/record(.*)", RecordServiceHandler, name="recordService"),
 ], **settings)
