@@ -3,35 +3,12 @@
 #include "str_utils.hpp"
 #include <ctime>
 
-#ifdef USE_LIB_RSS
-	
-#else
-	#include <boost/date_time.hpp>
-	#include <boost/date_time/local_time/local_time.hpp>
-	#include <boost/date_time/posix_time/posix_time.hpp>
-#endif
-
 namespace models
 {
 	record::record()
 	{
 	}
 
-	record::record(const std::string id,
-			const std::string link,
-			const std::string date,
-			const std::string title,
-			const std::string description)
-	{
-			this->id = id;
-			this->link = link;
-			this->title = title;
-			this->description = description;
-
-			this->hash = md5(id);
-			this->date = parse_date(date);
-	}
-	
 	record::record(const char* id,
 			const char* link,
 			const long date,
@@ -83,29 +60,6 @@ namespace models
 	{
 			return hash;
 	}
-
-	long record::parse_date(const std::string &input) {
-		//TODO: date
-#ifdef USE_LIB_RSS
-		return 0;
-#else
-		using namespace boost::gregorian;
-		using namespace boost::local_time;
-		using namespace boost::posix_time;
-
-		boost::local_time::local_time_input_facet* lif(new boost::local_time::local_time_input_facet("%a, %d %b %Y %H:%M:%S GMT"));
-		std::stringstream ss(input);
-		ss.imbue(std::locale(std::locale::classic(), lif));
-
-		boost::local_time::local_date_time dt(boost::local_time::local_sec_clock::local_time(boost::local_time::time_zone_ptr()));
-		ss >> dt;
-
-		boost::posix_time::ptime time_t_epoch(boost::gregorian::date(1970, 1, 1));
-		time_duration diff = dt.utc_time() - time_t_epoch;
-		return diff.total_seconds();
-#endif
-	}
-
 
 	std::string record::md5(const std::string &input)
 	{

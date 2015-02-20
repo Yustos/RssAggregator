@@ -7,12 +7,6 @@ namespace models {
     class record {
     public:
         record();
-        record(
-                const std::string id,
-                const std::string link,
-                const std::string date,
-                const std::string title,
-                const std::string description);
 
         record(const char* id,
                 const char* link,
@@ -31,7 +25,6 @@ namespace models {
         std::string id, title, description, link, hash;
         long date;
 
-        long parse_date(const std::string &input);
         std::string md5(const std::string &input);
     };
 }
